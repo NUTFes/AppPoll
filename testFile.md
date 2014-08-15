@@ -1,2 +1,0 @@
-# nakamura git test
-aaaaaaaaaaa
