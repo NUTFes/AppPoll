@@ -1,0 +1,19 @@
+body { 
+    text-align:center;
+    background-color:#ffffff; 
+}
+#wrap { width:auto; text-align:center; margin:0 auto; background-color:#ffffff; padding:10px; }
+#inner { margin:0 auto; }
+#content { list-style-type:none; }
+#canvas { 
+    height:auto;
+    width: auto; 
+}
+.disable-select{
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.draggable{
+    cursor:move;
+}

@@ -1,0 +1,18 @@
+body{
+    width:100%;
+}
+
+div#app_body{
+    margin-left:10px;
+    width:90%;
+
+}
+#story_box{
+    height:300px;
+    width:100%;
+}
+div#user_form{
+    height:200px;
+    width:30%;
+}
+

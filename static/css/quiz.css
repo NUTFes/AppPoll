@@ -1,0 +1,27 @@
+body{
+    width:100%;
+}
+
+div#app_body{
+    margin-left:40px;
+    width:95%;
+}
+div#story{
+    float: left;
+    height:400px;
+    width:35%;
+}
+div#story_text{
+    height:90%;
+    overflow:auto;
+}
+#text_question{
+    height:100px;
+    overflow:hidden;
+}
+div#quiz_form{
+    margin-left:40px;
+    font-size:20px;
+    float: left;
+    width: 55%;
+}
