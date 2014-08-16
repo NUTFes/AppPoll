@@ -9,6 +9,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+import tornado.log
 
 from tornado.options import define, options
 
@@ -18,55 +19,43 @@ from itertools import islice, cycle
 
 define( "port", default=8888, help="run on the given port", type=int)
 PROXY_SERVER = 'proxy.nagaokaut.ac.jp:8080'
-config = conf.app_settings['twitter']
+config = conf.app_settings["twitter"]
+connections = []
+
+class APIonProxy(twitter.Api):
+    def _GetOpener(self, url, username=None, password=None):
+        opener = twitter.Api._GetOpener(self, url, username, password)
+        urllib2 = twitter.urllib2
+        p_h = urllib2.ProxyHandler({'http': PROXY_SERVER})
+        opener.add_handler(p_h)
+        return opener
+
 api = APIonProxy(
         consumer_key=config["csm_key"],
         consumer_secret=config['csm_secret'],
         access_token_key=config["acs_key"],
         access_token_secret=config['acs_secret']
         )
-connections = []
 
-class APIonProxy(twitter.Api):
-    def _GetOpener(self, url, username=None, password=None):
-        opener = twitter.Api._GetOpener(self, url, username, password)
-
-        urllib2 = twitter.urllib2
-        p_h = urllib2.ProxyHandler({'http': PROXY_SERVER})
-        opener.add_handler(p_h)
-        return opener
-
- 
 class MainHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
         self.render("index.html")
 
+class CosplayCandidate(object):
+    def __init__(self, name="John", hashtag="#entry01", init_cnt=0):
+        self.name = name
+        self.hashtag = hashtag
+        self.cnt = init_cnt
+
 class TweetWebSocket(tornado.websocket.WebSocketHandler):
-
-    class CosplayCandidate(object):
-        def __init__(self, name="JohnDo", hashtag="#entry01", init_cnt=0):
-            self.name = name
-            self.hashtag = hashtag
-            self.cnt = init_cnt
-
     def open(self):
         self.add_connection()
-        self.wait_message()
         self.setup()
 
     def setup(self):
         self.candidate = [ CosplayCandidate() for x in xrange(10)]
 
-    def tweet_callback(self):
-        tweets = api.GetSearch(config['anchored_hashtag'])
-        for tweet in tweets:
-            # TODO: idごとにツイートを管理し、逐次更新していく
-            # update_tweets()
-        # coutup_vote()
-        # write_message()
-
-        tornado.ioloop.IOLoop.call_later(10, self.tweet_callback)
 
     def add_connection(self):
         if not (self in connections):
@@ -85,14 +74,14 @@ class TweetWebSocket(tornado.websocket.WebSocketHandler):
                 connections.remove(con)
         self.wait_message()
 
-    def on_connection_close(self):
-        self.del_connection()
-        self.close()
-
     def del_connection(self):
         if self in connections:
             connections.remove(self)
 
+class MainHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        self.render("index.html")
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -103,14 +92,26 @@ class Application(tornado.web.Application):
         )
         handlers = [
             (r"/", MainHandler),
+            (r"/data", TweetWebSocket),
             ]
         tornado.web.Application.__init__(self, handlers, **settings)
 
+def tweet_callback():
+    tweets = api.GetSearch(config['anchored_hashtag'])
+    print "Received Tweets:({0})".format(len(tweets))
+        # print tweet
+        # TODO: idごとにツイートを管理し、逐次更新していく
+        # update_tweets()
+    # coutup_vote()
+    # write_message()
+
+    tornado.ioloop.IOLoop.instance().call_later(10, tweet_callback)
 
 def main():
     tornado.options.parse_command_line()
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(8888)
+    tornado.ioloop.IOLoop.instance().call_later(10, tweet_callback)
     tornado.ioloop.IOLoop.instance().start()
 
 
