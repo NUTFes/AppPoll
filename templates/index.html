@@ -81,6 +81,15 @@ function init() {
                 .attr("d", arc)
                 .each(function(){ this._current = {starAngle:0, endAngle:0};});
 
+        var score_text = svg.append("text")
+            .attr("text-anchor", "middle")
+            .attr({width:100, hight:100, x:10, y:100})
+            .text("10000pt")
+            .style({
+                "font-size" : "50px",
+                "font-family": "Impact"
+            });
+
         dispatch.on("update.pie", function(data){
             path.data(pie.value(function(d) {return d["count"];})(data))
                 .transition()
@@ -90,6 +99,19 @@ function init() {
                     return function(t){
                         return arc(interpolate(t));
                     };
+                });
+            var sum = 0;
+            for (var i=0; i < data.length; ++i) {
+                sum += data[i]["count"];
+            }
+            score_text.data([sum])
+                .transition()
+                .duration(1000)
+                .tween("text", function(d) {
+                        f = Number(this.textContent.replace('pt', ""));
+                        console.log(f);
+                        var i = d3.interpolateRound(f, d);
+                        return function(t) { this.textContent = i(t) + "pt"};
                 });
         });
     });
